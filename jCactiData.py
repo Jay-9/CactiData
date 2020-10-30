@@ -1,12 +1,16 @@
+# coding=gbk
+
+import matplotlib
+matplotlib.use('Agg')
+
+from PIL import Image
 import time
 import os
 import datetime
 import requests
 import pandas
-from matplotlib import pyplot as plt
-from PIL import Image
-import matplotlib
-matplotlib.use('Agg')
+import paramiko
+import matplotlib.pyplot as plt
 
 
 def get_sor_data():
@@ -37,31 +41,18 @@ def data_calculation(the_sor_file):
     idc_per = round(idc_flow/total_flow*100, 2)
     nwl_per = round(hl_per + idc_per, 2)
     # print(ck_per, hl_per, idc_per, nwl_per)
-    ben_user = round(the_num_data.iloc[-1, 1], 2)
     all_user = round(the_num_data.iloc[-1, 2], 2)
-    average_bandwidth = round(total_flow/ben_user*100, 2)
-    # print(all_user, ben_user, average_bandwidth)
+    average_bandwidth = round(total_flow/all_user*100, 2)
+    # print(all_user, average_bandwidth)
     return [max_time, ck_flow, hl_flow, idc_flow, total_flow, ck_per, hl_per, idc_per, nwl_per,
-            all_user, ben_user, average_bandwidth]
+            all_user, average_bandwidth]
 
 
 def log_csv(the_one_data_log):
     columns = ['max_time', 'ck_flow', 'hl_flow', 'idc_flow', 'total_flow', 'ck_per', 'hl_per', 'idc_per',
-               'nwl_per', 'all_user', 'ben_user', 'average_bandwidth']
-    the_all_data_log = pandas.DataFrame()
-    the_all_data_log.at[0, 'max_time'] = the_one_data_log[0]
-    the_all_data_log.at[0, 'ck_flow'] = the_one_data_log[1]
-    the_all_data_log.at[0, 'hl_flow'] = the_one_data_log[2]
-    the_all_data_log.at[0, 'idc_flow'] = the_one_data_log[3]
-    the_all_data_log.at[0, 'total_flow'] = the_one_data_log[4]
-    the_all_data_log.at[0, 'ck_per'] = the_one_data_log[5]
-    the_all_data_log.at[0, 'hl_per'] = the_one_data_log[6]
-    the_all_data_log.at[0, 'idc_per'] = the_one_data_log[7]
-    the_all_data_log.at[0, 'nwl_per'] = the_one_data_log[8]
-    the_all_data_log.at[0, 'all_user'] = the_one_data_log[9]
-    the_all_data_log.at[0, 'ben_user'] = the_one_data_log[10]
-    the_all_data_log.at[0, 'average_bandwidth'] = the_one_data_log[11]
-    the_all_data_log.to_csv('all_data_log.csv', mode='a', header=False, index=False, columns=columns)
+               'nwl_per', 'all_user', 'average_bandwidth']
+    the_insert_data = pandas.DataFrame(columns=columns, data=[the_one_data_log])
+    the_insert_data.to_csv('/jay/all_data_log.csv', mode='a', header=False, index=False, columns=columns)
 
 
 def drawing():
@@ -75,9 +66,8 @@ def drawing():
     idc_per = []
     nwl_per = []
     all_user = []
-    ben_user = []
     average_bandwidth = []
-    the_all_data_log = pandas.read_csv('all_data_log.csv').iloc[-30:, :].reset_index(drop=True)
+    the_all_data_log = pandas.read_csv('/jay/all_data_log.csv').iloc[-30:, :].reset_index(drop=True)
 
     for i in range(the_all_data_log.shape[0]-1, -1, -1):
         x_lab.append(the_all_data_log.at[i, 'max_time'][5:].replace(' ', '\n'))
@@ -90,18 +80,17 @@ def drawing():
         idc_per.append(the_all_data_log.at[i, 'idc_per'])
         nwl_per.append(the_all_data_log.at[i, 'nwl_per'])
         all_user.append(the_all_data_log.at[i, 'all_user'])
-        ben_user.append(the_all_data_log.at[i, 'ben_user'])
         average_bandwidth.append(the_all_data_log.at[i, 'average_bandwidth'])
 
     plt.figure(figsize=(30, 30))
     ax1 = plt.subplot2grid((30, 10), (23, 0), rowspan=10, colspan=11)
-    font_title = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=20)
-    font_week = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=10)
-    font_num = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=8)
+    font_title = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=20)
+    font_week = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=10)
+    font_num = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=8)
 
-    # ax1.set_xlabel("æ—¥       æœŸ", fontproperties = font_title)
-    ax1.set_ylabel("æµ       é‡", fontproperties=font_title)
-    ax1.set_title("æµ    é‡    ç»Ÿ    è®¡    å›¾\n", fontproperties=font_title)
+    # ax1.set_xlabel("ÈÕ       ÆÚ", fontproperties = font_title)
+    ax1.set_ylabel("Á÷       Á¿", fontproperties=font_title)
+    ax1.set_title("Á÷    Á¿    Í³    ¼Æ    Í¼\n", fontproperties=font_title)
     ax1.set_ylim([0, max(total_flow) + 50])
     ax1.set_xticks([])
 
@@ -122,15 +111,15 @@ def drawing():
     for xx, yy, zz in zip(x_lab, idc_flow, idc_per):
         ax1.text(xx, max(ck_flow+hl_flow) + 5, str(yy) + 'G\n' + str(zz) + '%', ha='center', fontsize=7)
     for xx, yy, zz in zip(x_lab, nwl_per, total_flow):
-        ax1.text(xx, max(total_flow)-60, 'æ€»æµé‡\n' + str(zz) + 'G\n\n' + 'å†…ç½‘ç‡\n' + str(yy) + '%', ha='center',
+        ax1.text(xx, max(total_flow)-60, '×ÜÁ÷Á¿\n' + str(zz) + 'G\n\n' + 'ÄÚÍøÂÊ\n' + str(yy) + '%', ha='center',
                  fontproperties=font_num)
-    for xx, yy, zz, aa in zip(x_lab, ben_user, all_user, average_bandwidth):
-        ax1.text(xx, max(ck_flow+hl_flow)+260, 'æ€»ç”¨æˆ·æ•°\n' + str(zz) + '\n' + 'æœ¬ç½‘ç”¨æˆ·\n' + str(yy) + '\n\n\n' +
-                 'æˆ·å‡å¸¦å®½\n' + str(aa) + '\nKbps/æˆ·', ha='center', fontproperties=font_num)
+    for xx, yy, zz in zip(x_lab, all_user, average_bandwidth):
+        ax1.text(xx, max(ck_flow+hl_flow)+260, '×ÜÓÃ»§Êı\n' + str(yy) + '\n'*4 +
+                 '»§¾ù´ø¿í\n' + str(zz) + '\nKbps/»§', ha='center', fontproperties=font_num)
     for xx in x_lab:
         ax1.text(xx, -90, xx.split('\n')[0] + '\n' + xx.split('\n')[1][:5], ha='center', fontsize=9)
 
-    week_dic = {'0': 'æ—¥', '1': 'ä¸€', '2': 'äºŒ', '3': 'ä¸‰', '4': 'å››', '5': 'äº”', '6': 'å…­'}
+    week_dic = {'0': 'ÈÕ', '1': 'Ò»', '2': '¶ş', '3': 'Èı', '4': 'ËÄ', '5': 'Îå', '6': 'Áù'}
     for xx in x_lab:
         the_num = datetime.datetime(year=2020,
                                 month=int(xx.split('\n')[0].replace('-', ',').replace('/', ',').split(',')[0]),
@@ -139,7 +128,7 @@ def drawing():
         ax1.text(xx, max(ck_flow+hl_flow)+120, week_dic[the_num], ha='center', fontproperties=font_week)
 
     ax2 = plt.subplot2grid((30, 10), (19, 0), colspan=1, rowspan=2)
-    ax2.legend(handles=[legend_idc, legend_hl, legend_ck], labels=["I D C", "äº’è”äº’é€š", "å‡º    å£"], loc=2, prop=font_title)
+    ax2.legend(handles=[legend_idc, legend_hl, legend_ck], labels=["I D C", "»¥Áª»¥Í¨", "³ö    ¿Ú"], loc=2, prop=font_title)
     ax2.axis('off')
 
     ax3 = ax1.twinx()
@@ -151,14 +140,26 @@ def drawing():
     ax3.set_xticks([])
     ax1.set_xticks([])
 
-    plt.savefig('pic_data.png')
+    plt.savefig('/jay/pic_data.png')
 
 
 def mix_pic():
-    the_pic_data = Image.open('pic_data.png').convert('RGBA')
-    the_pic_back = Image.open('pic_back.png').convert('RGBA')
+    the_pic_data = Image.open('/jay/pic_data.png').convert('RGBA')
+    the_pic_back = Image.open('/jay/pic_back.png').convert('RGBA')
     the_pic_ok = Image.alpha_composite(the_pic_data, the_pic_back)
-    the_pic_ok.save('pic_ok.png')
+    the_pic_ok.save('/jay/pic_ok.png')
+    os.remove('/jay/pic_data.png')
+
+
+def update_pic():
+    ssh = paramiko.SSHClient()
+    know_host = paramiko.AutoAddPolicy()
+    ssh.set_missing_host_key_policy(know_host)
+    ssh.connect(hostname='10.2.205.55', port=22, username='root', password='jsm@96633')
+    the_cmd = r'wget "ftp://10.2.205.6/jay/pic_ok.png" --ftp-user=shiyan --ftp-password=123 ' \
+              r'-O /var/www/html/plugins/weathermap/images/pic_ok.png'
+    stdin, stdout, stderr = ssh.exec_command(the_cmd)
+    ssh.close()
 
 
 if __name__ == '__main__':
@@ -167,3 +168,6 @@ if __name__ == '__main__':
     log_csv(one_data_log)
     drawing()
     mix_pic()
+    update_pic()
+    # os.popen(r'cp /jay/pic_ok.png /wjq', 'r')
+
