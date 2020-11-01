@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from PIL import Image
+from openpyxl import load_workbook
 import time
 import os
 import datetime
@@ -35,15 +36,12 @@ def data_calculation(the_sor_file):
     hl_flow = round(the_all_data.iloc[the_all_data.iloc[:, 4].idxmax(), 2]/1000/1000/1000, 2)
     idc_flow = round(the_all_data.iloc[the_all_data.iloc[:, 4].idxmax(), 3]/1000/1000/1000, 2)
     total_flow = round(the_all_data.iloc[:, 4].max()/1000/1000/1000, 2)
-    # print(max_time, ck_flow, hl_flow, idc_flow, total_flow)
     ck_per = round(ck_flow/total_flow*100, 2)
     hl_per = round(hl_flow/total_flow*100, 2)
     idc_per = round(idc_flow/total_flow*100, 2)
     nwl_per = round(hl_per + idc_per, 2)
-    # print(ck_per, hl_per, idc_per, nwl_per)
     all_user = round(the_num_data.iloc[-1, 2], 2)
     average_bandwidth = round(total_flow/all_user*100, 2)
-    # print(all_user, average_bandwidth)
     return [max_time, ck_flow, hl_flow, idc_flow, total_flow, ck_per, hl_per, idc_per, nwl_per,
             all_user, average_bandwidth]
 
@@ -158,8 +156,36 @@ def update_pic():
     ssh.connect(hostname='10.2.205.55', port=22, username='root', password='jsm@96633')
     the_cmd = r'wget "ftp://10.2.205.6/jay/pic_ok.png" --ftp-user=shiyan --ftp-password=123 ' \
               r'-O /var/www/html/plugins/weathermap/images/pic_ok.png'
-    stdin, stdout, stderr = ssh.exec_command(the_cmd)
+    stdin, stdout, stderr = ssh.exec_command(the_cmd) # the_get_info = stdout.readlines()[0].split(',')
     ssh.close()
+
+
+def update_excel(the_excel, the_data):
+    workbook = load_workbook(filename=the_excel)
+    sheet = workbook.active
+    cell_max_time = sheet['A1']
+    cell_max_time.value = the_data[0][:4] + '年\n' + the_data[0][5:7] + '月\n' + the_data[0][8:10] + '日'
+    cell_ck_flow = sheet['C3']
+    cell_ck_flow.value = str(the_data[1]) + ' Gbps'
+    cell_hl_flow = sheet['C4']
+    cell_hl_flow.value = str(the_data[2]) + ' Gbps'
+    cell_idc_flow = sheet['C5']
+    cell_idc_flow.value = str(the_data[3]) + ' Gbps'
+    cell_total_flow = sheet['C6']
+    cell_total_flow.value = str(the_data[4]) + ' Gbps'
+    cell_average_bandwidth = sheet['C7']
+    cell_average_bandwidth.value = str(the_data[10]) + ' kbps'
+    cell_ck_per = sheet['D3']
+    cell_ck_per.value = str(the_data[5]) + ' %'
+    cell_hl_per = sheet['D4']
+    cell_hl_per.value = str(the_data[6]) + ' %'
+    cell_idc_per = sheet['D5']
+    cell_idc_per.value = str(the_data[7]) + ' %'
+    cell_nwl_per = sheet['E7']
+    cell_nwl_per.value = str(the_data[8]) + ' %'
+    cell_all_user = sheet['E6']
+    cell_all_user.value = str(the_data[9]) + ' 万'
+    workbook.save(filename=the_excel)
 
 
 if __name__ == '__main__':
@@ -169,5 +195,5 @@ if __name__ == '__main__':
     drawing()
     mix_pic()
     update_pic()
-    # os.popen(r'cp /jay/pic_ok.png /wjq', 'r')
-
+    every_duty_file = '/jay/ok.xlsx'
+    update_excel(every_duty_file, one_data_log)
