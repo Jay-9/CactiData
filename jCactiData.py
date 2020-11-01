@@ -29,6 +29,31 @@ def get_sor_data():
 
 def data_calculation(the_sor_file):
     the_all_data = pandas.read_csv(the_sor_file, skiprows=9, usecols=[0, 8, 9, 10, 34])
+    today_data = pandas.DataFrame(columns = the_all_data.columns)
+    the_num_data = pandas.read_csv('/wjq/Number_of_users/Number_of_users.csv')
+    for row in the_all_data.itertuples():
+        if int(row.Date.replace('/', '-').split(' ')[0].split('-')[2]) == int(datetime.datetime.now().strftime('%d')):
+            today_data = today_data.append(the_all_data.iloc[row.Index, :])
+    today_data = today_data.reset_index(drop=True)
+    max_time = today_data.iloc[today_data.iloc[:, 4].idxmax(), 0]
+    ck_flow = round(today_data.iloc[today_data.iloc[:, 4].idxmax(), 1]/1000/1000/1000, 2)
+    hl_flow = round(today_data.iloc[today_data.iloc[:, 4].idxmax(), 2]/1000/1000/1000, 2)
+    idc_flow = round(today_data.iloc[today_data.iloc[:, 4].idxmax(), 3]/1000/1000/1000, 2)
+    total_flow = round(today_data.iloc[:, 4].max()/1000/1000/1000, 2)
+    ck_per = round(ck_flow/total_flow*100, 2)
+    hl_per = round(hl_flow/total_flow*100, 2)
+    idc_per = round(idc_flow/total_flow*100, 2)
+    nwl_per = round(hl_per + idc_per, 2)
+    all_user = round(the_num_data.iloc[-1, 2], 2)
+    average_bandwidth = round(total_flow/all_user*100, 2)
+    os.remove(the_sor_file)
+    return [max_time, ck_flow, hl_flow, idc_flow, total_flow, ck_per, hl_per, idc_per, nwl_per,
+            all_user, average_bandwidth]
+
+
+'''
+def data_calculation(the_sor_file):
+    the_all_data = pandas.read_csv(the_sor_file, skiprows=9, usecols=[0, 8, 9, 10, 34])
     the_num_data = pandas.read_csv('/wjq/Number_of_users/Number_of_users.csv')
     os.remove(the_sor_file)
     max_time = the_all_data.iloc[the_all_data.iloc[:, 4].idxmax(), 0]
@@ -43,7 +68,7 @@ def data_calculation(the_sor_file):
     all_user = round(the_num_data.iloc[-1, 2], 2)
     average_bandwidth = round(total_flow/all_user*100, 2)
     return [max_time, ck_flow, hl_flow, idc_flow, total_flow, ck_per, hl_per, idc_per, nwl_per,
-            all_user, average_bandwidth]
+            all_user, average_bandwidth]'''
 
 
 def log_csv(the_one_data_log):
@@ -156,8 +181,9 @@ def update_pic():
     ssh.connect(hostname='10.2.205.55', port=22, username='root', password='jsm@96633')
     the_cmd = r'wget "ftp://10.2.205.6/jay/pic_ok.png" --ftp-user=shiyan --ftp-password=123 ' \
               r'-O /var/www/html/plugins/weathermap/images/pic_ok.png'
-    stdin, stdout, stderr = ssh.exec_command(the_cmd) # the_get_info = stdout.readlines()[0].split(',')
+    stdin, stdout, stderr = ssh.exec_command(the_cmd)
     ssh.close()
+    os.remove('/jay/pic_ok.png')
 
 
 def update_excel(the_excel, the_data):
