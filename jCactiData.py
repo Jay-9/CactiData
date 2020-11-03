@@ -53,26 +53,6 @@ def data_calculation(the_sor_file):
             all_user, average_bandwidth]
 
 
-'''
-def data_calculation(the_sor_file):
-    the_all_data = pandas.read_csv(the_sor_file, skiprows=9, usecols=[0, 8, 9, 10, 34])
-    the_num_data = pandas.read_csv('/wjq/Number_of_users/Number_of_users.csv')
-    os.remove(the_sor_file)
-    max_time = the_all_data.iloc[the_all_data.iloc[:, 4].idxmax(), 0]
-    ck_flow = round(the_all_data.iloc[the_all_data.iloc[:, 4].idxmax(), 1]/1000/1000/1000, 2)
-    hl_flow = round(the_all_data.iloc[the_all_data.iloc[:, 4].idxmax(), 2]/1000/1000/1000, 2)
-    idc_flow = round(the_all_data.iloc[the_all_data.iloc[:, 4].idxmax(), 3]/1000/1000/1000, 2)
-    total_flow = round(the_all_data.iloc[:, 4].max()/1000/1000/1000, 2)
-    ck_per = round(ck_flow/total_flow*100, 2)
-    hl_per = round(hl_flow/total_flow*100, 2)
-    idc_per = round(idc_flow/total_flow*100, 2)
-    nwl_per = round(hl_per + idc_per, 2)
-    all_user = round(the_num_data.iloc[-1, 2], 2)
-    average_bandwidth = round(total_flow/all_user*100, 2)
-    return [max_time, ck_flow, hl_flow, idc_flow, total_flow, ck_per, hl_per, idc_per, nwl_per,
-            all_user, average_bandwidth]'''
-
-
 def log_csv(the_one_data_log):
     columns = ['max_time', 'ck_flow', 'hl_flow', 'idc_flow', 'total_flow', 'ck_per', 'hl_per', 'idc_per',
                'nwl_per', 'all_user', 'average_bandwidth']
