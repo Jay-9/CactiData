@@ -2,7 +2,6 @@
 
 import matplotlib
 matplotlib.use('Agg')
-
 from PIL import Image, ImageGrab
 from openpyxl import load_workbook
 # from win32com.client import Dispatch, DispatchEx
