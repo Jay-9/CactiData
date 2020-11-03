@@ -2,11 +2,8 @@
 
 import matplotlib
 matplotlib.use('Agg')
-from PIL import Image, ImageGrab
+from PIL import Image
 from openpyxl import load_workbook
-# from win32com.client import Dispatch, DispatchEx
-# import pythoncom
-import xlwings as xw
 import time
 import os
 import datetime
@@ -195,23 +192,6 @@ def update_excel(the_excel, the_data):
     workbook.save(filename=the_excel)
 
 
-def excel_pic2_linux(the_every_duty_file):
-    app = xw.App(visible=True, add_book=False)
-    wb = app.books.open(the_every_duty_file)
-    sht = wb.sheets['Sheet1']
-    range_val = sht.range((1, 1), (8, 5))
-    range_val.api.CopyPicture()
-    sht.api.Paste()
-    pic = sht.pictures[0]
-    pic.api.Copy()
-    img = ImageGrab.grabclipboard()
-    img.save('/jay/ok.png')
-    pic.delete()
-    wb.close()
-    app.quit()
-    # os.remove('/jay/ok.xlsx')
-
-
 if __name__ == '__main__':
     sor_file = get_sor_data()
     one_data_log = data_calculation(sor_file)
@@ -221,4 +201,3 @@ if __name__ == '__main__':
     update_pic()
     every_duty_file = '/jay/ok.xlsx'
     update_excel(every_duty_file, one_data_log)
-    # excel_pic2_linux(every_duty_file)

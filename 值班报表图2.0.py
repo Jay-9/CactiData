@@ -24,3 +24,20 @@ excel.Quit()
 pythoncom.CoUninitialize()
 os.remove(os.getcwd()+'\\ok.xlsx')
 x = input('\n\n程序执行完毕,按回车键后退出！')
+
+'''import xlwings as xw
+def excel_pic2_linux(the_every_duty_file):
+    app = xw.App(visible=True, add_book=False)
+    wb = app.books.open(the_every_duty_file)
+    sht = wb.sheets['Sheet1']
+    range_val = sht.range((1, 1), (8, 5))
+    range_val.api.CopyPicture()
+    sht.api.Paste()
+    pic = sht.pictures[0]
+    pic.api.Copy()
+    img = ImageGrab.grabclipboard()
+    img.save('/jay/ok.png')
+    pic.delete()
+    wb.close()
+    app.quit()
+    # os.remove('/jay/ok.xlsx')'''
