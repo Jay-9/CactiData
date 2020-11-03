@@ -185,7 +185,6 @@ def update_pic():
               r'-O /var/www/html/plugins/weathermap/images/pic_ok.png'
     stdin, stdout, stderr = ssh.exec_command(the_cmd)
     ssh.close()
-    os.remove('/jay/pic_ok.png')
 
 
 def update_excel(the_excel, the_data):
