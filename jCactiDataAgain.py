@@ -1,60 +1,12 @@
-# coding=gbk
-
+# 用于更新ll_data_log.csv（数据库）文件后的重新生成cacti监控图
 import matplotlib
-matplotlib.use('Agg')
-from PIL import Image
-from openpyxl import load_workbook
-import time
 import os
 import datetime
-import requests
 import pandas
 import paramiko
 import matplotlib.pyplot as plt
-
-
-def get_sor_data():
-    the_current = int(time.mktime((datetime.datetime.now() + datetime.timedelta(minutes=-5)).timetuple()))
-    the_current_ago = int(time.mktime((datetime.datetime.now() + datetime.timedelta(hours=-1)).timetuple()))
-    the_url = 'http://10.2.205.55/graph_xport.php?local_graph_id=1729&rra_id=1&view_type=&graph_start=%d&graph_end=%d'\
-              % (the_current_ago, the_current)
-    the_result = requests.post(url=the_url,
-                               data={'action': 'login', 'login_username': 'admin', 'login_password': 'syc@9036idcJk'})\
-        .text.replace('"', '')
-    with open(datetime.datetime.now().strftime('%Y-%m-%d') + '.csv', 'w', encoding='utf-8') as f:
-        f.write(the_result)
-    return datetime.datetime.now().strftime('%Y-%m-%d') + '.csv'
-
-
-def data_calculation(the_sor_file):
-    the_all_data = pandas.read_csv(the_sor_file, skiprows=9, usecols=[0, 8, 9, 10, 34])
-    today_data = pandas.DataFrame(columns=the_all_data.columns)
-    the_num_data = pandas.read_csv('/wjq/Number_of_users/Number_of_users.csv')
-    for row in the_all_data.itertuples():
-        if int(row.Date.replace('/', '-').split(' ')[0].split('-')[2]) == int(datetime.datetime.now().strftime('%d')):
-            today_data = today_data.append(the_all_data.iloc[row.Index, :])
-    today_data = today_data.reset_index(drop=True)
-    max_time = today_data.iloc[today_data.iloc[:, 4].idxmax(), 0]
-    ck_flow = round(today_data.iloc[today_data.iloc[:, 4].idxmax(), 1]/1000/1000/1000, 2)
-    hl_flow = round(today_data.iloc[today_data.iloc[:, 4].idxmax(), 2]/1000/1000/1000, 2)
-    idc_flow = round(today_data.iloc[today_data.iloc[:, 4].idxmax(), 3]/1000/1000/1000, 2)
-    total_flow = round(today_data.iloc[:, 4].max()/1000/1000/1000, 2)
-    ck_per = round(ck_flow/total_flow*100, 2)
-    hl_per = round(hl_flow/total_flow*100, 2)
-    idc_per = round(idc_flow/total_flow*100, 2)
-    nwl_per = round(hl_per + idc_per, 2)
-    all_user = round(the_num_data.iloc[-1, 2], 2)
-    average_bandwidth = round(total_flow/all_user*100, 2)
-    os.remove(the_sor_file)
-    return [max_time, ck_flow, hl_flow, idc_flow, total_flow, ck_per, hl_per, idc_per, nwl_per,
-            all_user, average_bandwidth]
-
-
-def log_csv(the_one_data_log):
-    columns = ['max_time', 'ck_flow', 'hl_flow', 'idc_flow', 'total_flow', 'ck_per', 'hl_per', 'idc_per',
-               'nwl_per', 'all_user', 'average_bandwidth']
-    the_insert_data = pandas.DataFrame(columns=columns, data=[the_one_data_log])
-    the_insert_data.to_csv('/jay/all_data_log.csv', mode='a', header=False, index=False, columns=columns)
+from PIL import Image
+from openpyxl import load_workbook
 
 
 def drawing():
@@ -69,7 +21,7 @@ def drawing():
     nwl_per = []
     all_user = []
     average_bandwidth = []
-    the_all_data_log = pandas.read_csv('/jay/all_data_log.csv').iloc[-30:, :].reset_index(drop=True)
+    the_all_data_log = pandas.read_csv('all_data_log.csv').iloc[-30:, :].reset_index(drop=True)
 
     for i in range(the_all_data_log.shape[0]-1, -1, -1):
         x_lab.append(the_all_data_log.at[i, 'max_time'][5:].replace(' ', '\n'))
@@ -86,9 +38,9 @@ def drawing():
 
     plt.figure(figsize=(30, 30))
     ax1 = plt.subplot2grid((30, 10), (23, 0), rowspan=10, colspan=11)
-    font_title = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=20)
-    font_week = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=10)
-    font_num = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=8)
+    font_title = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=20)
+    font_week = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=10)
+    font_num = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=8)
 
     # ax1.set_xlabel("日       期", fontproperties = font_title)
     ax1.set_ylabel("流       量", fontproperties=font_title)
@@ -142,15 +94,15 @@ def drawing():
     ax3.set_xticks([])
     ax1.set_xticks([])
 
-    plt.savefig('/jay/pic_data.png')
+    plt.savefig('pic_data.png')
 
 
 def mix_pic():
-    the_pic_data = Image.open('/jay/pic_data.png').convert('RGBA')
-    the_pic_back = Image.open('/jay/pic_back.png').convert('RGBA')
+    the_pic_data = Image.open('pic_data.png').convert('RGBA')
+    the_pic_back = Image.open('pic_back.png').convert('RGBA')
     the_pic_ok = Image.alpha_composite(the_pic_data, the_pic_back)
-    the_pic_ok.save('/jay/pic_ok.png')
-    os.remove('/jay/pic_data.png')
+    the_pic_ok.save('pic_ok.png')
+    os.remove('pic_data.png')
 
 
 def update_pic():
@@ -164,7 +116,9 @@ def update_pic():
     ssh.close()
 
 
-def update_excel(the_excel, the_data):
+def update_excel(the_excel):
+    the_data = pandas.read_csv('all_data_log.csv').iloc[-1:, :]
+    the_data = the_data.values.tolist()[0]
     workbook = load_workbook(filename=the_excel)
     sheet = workbook.active
     cell_max_time = sheet['A1']
@@ -193,11 +147,8 @@ def update_excel(the_excel, the_data):
 
 
 if __name__ == '__main__':
-    sor_file = get_sor_data()
-    one_data_log = data_calculation(sor_file)
-    log_csv(one_data_log)
-    drawing()
-    mix_pic()
-    update_pic()
-    every_duty_file = '/jay/ok.xlsx'
-    update_excel(every_duty_file, one_data_log)
+    drawing()  # 1
+    mix_pic()  # 2
+    # 执行1和2后，rz上传pic_ok.png
+    # update_pic()
+    # update_excel('ok.xlsx')
