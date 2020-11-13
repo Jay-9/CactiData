@@ -1,4 +1,5 @@
-# ÓÃÓÚ¸üĞÂll_data_log.csv£¨Êı¾İ¿â£©ÎÄ¼şºóµÄÖØĞÂÉú³Écacti¼à¿ØÍ¼
+#coding:utf-8
+# ç”¨äºæ›´æ–°ll_data_log.csvï¼ˆæ•°æ®åº“ï¼‰æ–‡ä»¶åçš„é‡æ–°ç”Ÿæˆcactiç›‘æ§å›¾
 import matplotlib
 import os
 import datetime
@@ -42,9 +43,9 @@ def drawing():
     font_week = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=10)
     font_num = matplotlib.font_manager.FontProperties(fname=r'the_font.ttf', size=8)
 
-    # ax1.set_xlabel("ÈÕ       ÆÚ", fontproperties = font_title)
-    ax1.set_ylabel("Á÷       Á¿", fontproperties=font_title)
-    ax1.set_title("Á÷    Á¿    Í³    ¼Æ    Í¼\n", fontproperties=font_title)
+    # ax1.set_xlabel("æ—¥       æœŸ", fontproperties = font_title)
+    ax1.set_ylabel("æµ       é‡", fontproperties=font_title)
+    ax1.set_title("æµ    é‡    ç»Ÿ    è®¡    å›¾\n", fontproperties=font_title)
     ax1.set_ylim([0, max(total_flow) + 50])
     ax1.set_xticks([])
 
@@ -65,15 +66,15 @@ def drawing():
     for xx, yy, zz in zip(x_lab, idc_flow, idc_per):
         ax1.text(xx, max(ck_flow+hl_flow) + 5, str(yy) + 'G\n' + str(zz) + '%', ha='center', fontsize=7)
     for xx, yy, zz in zip(x_lab, nwl_per, total_flow):
-        ax1.text(xx, max(total_flow)-60, '×ÜÁ÷Á¿\n' + str(zz) + 'G\n\n' + 'ÄÚÍøÂÊ\n' + str(yy) + '%', ha='center',
+        ax1.text(xx, max(total_flow)-60, 'æ€»æµé‡\n' + str(zz) + 'G\n\n' + 'å†…ç½‘ç‡\n' + str(yy) + '%', ha='center',
                  fontproperties=font_num)
     for xx, yy, zz in zip(x_lab, all_user, average_bandwidth):
-        ax1.text(xx, max(ck_flow+hl_flow)+260, '×ÜÓÃ»§Êı\n' + str(yy) + '\n'*4 +
-                 '»§¾ù´ø¿í\n' + str(zz) + '\nKbps/»§', ha='center', fontproperties=font_num)
+        ax1.text(xx, max(ck_flow+hl_flow)+260, 'æ€»ç”¨æˆ·æ•°\n' + str(yy) + '\n'*4 +
+                 'æˆ·å‡å¸¦å®½\n' + str(zz) + '\nKbps/æˆ·', ha='center', fontproperties=font_num)
     for xx in x_lab:
         ax1.text(xx, -90, xx.split('\n')[0] + '\n' + xx.split('\n')[1][:5], ha='center', fontsize=9)
 
-    week_dic = {'0': 'ÈÕ', '1': 'Ò»', '2': '¶ş', '3': 'Èı', '4': 'ËÄ', '5': 'Îå', '6': 'Áù'}
+    week_dic = {'0': 'æ—¥', '1': 'ä¸€', '2': 'äºŒ', '3': 'ä¸‰', '4': 'å››', '5': 'äº”', '6': 'å…­'}
     for xx in x_lab:
         the_num = datetime.datetime(year=2020,
                                 month=int(xx.split('\n')[0].replace('-', ',').replace('/', ',').split(',')[0]),
@@ -82,7 +83,7 @@ def drawing():
         ax1.text(xx, max(ck_flow+hl_flow)+120, week_dic[the_num], ha='center', fontproperties=font_week)
 
     ax2 = plt.subplot2grid((30, 10), (19, 0), colspan=1, rowspan=2)
-    ax2.legend(handles=[legend_idc, legend_hl, legend_ck], labels=["I D C", "»¥Áª»¥Í¨", "³ö    ¿Ú"], loc=2, prop=font_title)
+    ax2.legend(handles=[legend_idc, legend_hl, legend_ck], labels=["I D C", "äº’è”äº’é€š", "å‡º    å£"], loc=2, prop=font_title)
     ax2.axis('off')
 
     ax3 = ax1.twinx()
@@ -122,7 +123,7 @@ def update_excel(the_excel):
     workbook = load_workbook(filename=the_excel)
     sheet = workbook.active
     cell_max_time = sheet['A1']
-    cell_max_time.value = the_data[0][:4] + 'Äê\n' + the_data[0][5:7] + 'ÔÂ\n' + the_data[0][8:10] + 'ÈÕ'
+    cell_max_time.value = the_data[0][:4] + 'å¹´\n' + the_data[0][5:7] + 'æœˆ\n' + the_data[0][8:10] + 'æ—¥'
     cell_ck_flow = sheet['C3']
     cell_ck_flow.value = str(the_data[1]) + ' Gbps'
     cell_hl_flow = sheet['C4']
@@ -142,13 +143,17 @@ def update_excel(the_excel):
     cell_nwl_per = sheet['E7']
     cell_nwl_per.value = str(the_data[8]) + ' %'
     cell_all_user = sheet['E6']
-    cell_all_user.value = str(the_data[9]) + ' Íò'
+    cell_all_user.value = str(the_data[9]) + ' ä¸‡'
     workbook.save(filename=the_excel)
 
 
 if __name__ == '__main__':
     drawing()  # 1
     mix_pic()  # 2
-    # Ö´ĞĞ1ºÍ2ºó£¬rzÉÏ´«pic_ok.png
+    # æ‰§è¡Œ1å’Œ2åï¼Œrzä¸Šä¼ pic_ok.png
+
     # update_pic()
+    # 3 æ›´æ–°cactiç›‘æ§å›¾
+
     # update_excel('ok.xlsx')
+    # 4 æ›´æ–°æ¯æ™šå€¼ç­æŠ¥è¡¨
