@@ -33,7 +33,6 @@ for j in range(len(the_data)):
     average_bandwidth.append(round(total_flow[j]/user_bw[j]*100, 2))
     user_pbs.append(round(user_all[j]-user_bw[j], 2))
 
-
 the_data.reverse()
 ck_flow.reverse()
 hl_flow.reverse()
