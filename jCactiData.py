@@ -1,16 +1,22 @@
-# coding=gbk
+#coding=gbk
 
 import matplotlib
 matplotlib.use('Agg')
 from PIL import Image
+from threading import Timer
 from openpyxl import load_workbook
-import time
+import matplotlib.pyplot as plt
 import os
+import re
+import sys
+import time
+import pandas
+import pymysql
 import datetime
 import requests
-import pandas
 import paramiko
-import matplotlib.pyplot as plt
+import subprocess
+''' matplotlib pillow openpyxl pandas pymysql requests paramiko '''
 
 
 def get_sor_data():
@@ -23,15 +29,22 @@ def get_sor_data():
         .text.replace('"', '')
     with open(datetime.datetime.now().strftime('%Y-%m-%d') + '.csv', 'w', encoding='utf-8') as f:
         f.write(the_result)
-    return datetime.datetime.now().strftime('%Y-%m-%d') + '.csv'
+
+    cursor_boss = subprocess.Popen("sqlplus -S " + "inter" + "/" + "inter#2016" + "@" + "jlbi2",
+                                   shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    date_boss = datetime.datetime.now().strftime('%Y%m%d')
+    cursor_boss.stdin.write(
+        bytes("select sum(BRD_NUM) from inter.realbrd_num where DAY_ID=%s;" % date_boss, encoding='utf-8'))
+    the_all_user = round(eval(re.findall(r'\d+', cursor_boss.communicate()[0].decode())[0])/10000, 2)
+
+    return datetime.datetime.now().strftime('%Y-%m-%d') + '.csv', the_all_user
 
 
-def data_calculation(the_sor_file):
+def data_calculation(the_sor_file, the_all_user, the_dic_online):
     the_all_data = pandas.read_csv(the_sor_file, skiprows=9, usecols=[0, 8, 9, 10, 34])
     today_data = pandas.DataFrame(columns=the_all_data.columns)
-    the_num_data = pandas.read_csv('/wjq/Number_of_users/Number_of_users.csv')
     for row in the_all_data.itertuples():
-        if int(row.Date.replace('/', '-').split(' ')[0].split('-')[2]) == int(datetime.datetime.now().strftime('%d')):
+        if int(row.Date.replace('/', '-').split(' ')[0].split('-')[2]) == int(datetime.datetime.now().strftime('%d')) and int(row.Date.replace('/', '-').split(' ')[1].split(':')[0]) >= 19:
             today_data = today_data.append(the_all_data.iloc[row.Index, :])
     today_data = today_data.reset_index(drop=True)
     max_time = today_data.iloc[today_data.iloc[:, 4].idxmax(), 0]
@@ -43,16 +56,22 @@ def data_calculation(the_sor_file):
     hl_per = round(hl_flow/total_flow*100, 2)
     idc_per = round(idc_flow/total_flow*100, 2)
     nwl_per = round(hl_per + idc_per, 2)
-    all_user = round(the_num_data.iloc[-1, 2], 2)
-    average_bandwidth = round(total_flow/all_user*100, 2)
+    all_user = the_all_user
+    all_bandwidth = round(total_flow/all_user*100, 2)
+    if max_time[-8:-3] in the_dic_online.keys():
+        online_user = round(the_dic_online[max_time[-8:-3]]/10000, 2)
+    else:
+        online_user = 1
+    online_bandwidth = round(total_flow/online_user*100, 2)
+
     os.remove(the_sor_file)
     return [max_time, ck_flow, hl_flow, idc_flow, total_flow, ck_per, hl_per, idc_per, nwl_per,
-            all_user, average_bandwidth]
+            all_user, all_bandwidth, online_user, online_bandwidth]
 
 
 def log_csv(the_one_data_log):
-    columns = ['max_time', 'ck_flow', 'hl_flow', 'idc_flow', 'total_flow', 'ck_per', 'hl_per', 'idc_per',
-               'nwl_per', 'all_user', 'average_bandwidth']
+    columns = ['max_time', 'ck_flow', 'hl_flow', 'idc_flow', 'total_flow', 'ck_per', 'hl_per', 'idc_per', 'nwl_per',
+               'all_user', 'all_bandwidth', 'online_user', 'online_bandwidth']
     the_insert_data = pandas.DataFrame(columns=columns, data=[the_one_data_log])
     the_insert_data.to_csv('/jay/all_data_log.csv', mode='a', header=False, index=False, columns=columns)
 
@@ -68,7 +87,7 @@ def drawing():
     idc_per = []
     nwl_per = []
     all_user = []
-    average_bandwidth = []
+    all_bandwidth = []
     the_all_data_log = pandas.read_csv('/jay/all_data_log.csv').iloc[-30:, :].reset_index(drop=True)
 
     for i in range(the_all_data_log.shape[0]-1, -1, -1):
@@ -82,7 +101,7 @@ def drawing():
         idc_per.append(the_all_data_log.at[i, 'idc_per'])
         nwl_per.append(the_all_data_log.at[i, 'nwl_per'])
         all_user.append(the_all_data_log.at[i, 'all_user'])
-        average_bandwidth.append(the_all_data_log.at[i, 'average_bandwidth'])
+        all_bandwidth.append(the_all_data_log.at[i, 'all_bandwidth'])
 
     plt.figure(figsize=(30, 30))
     ax1 = plt.subplot2grid((30, 10), (23, 0), rowspan=10, colspan=11)
@@ -90,9 +109,9 @@ def drawing():
     font_week = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=10)
     font_num = matplotlib.font_manager.FontProperties(fname=r'/jay/the_font.ttf', size=8)
 
-    # ax1.set_xlabel("ÈÕ       ÆÚ", fontproperties = font_title)
-    ax1.set_ylabel("Á÷       Á¿", fontproperties=font_title)
-    ax1.set_title("Á÷    Á¿    Í³    ¼Æ    Í¼\n", fontproperties=font_title)
+    # ax1.set_xlabel("æ—¥       æœŸ", fontproperties = font_title)
+    ax1.set_ylabel("æµ       é‡", fontproperties=font_title)
+    ax1.set_title("æµ    é‡    ç»Ÿ    è®¡    å›¾\n", fontproperties=font_title)
     ax1.set_ylim([0, max(total_flow) + 50])
     ax1.set_xticks([])
 
@@ -113,24 +132,24 @@ def drawing():
     for xx, yy, zz in zip(x_lab, idc_flow, idc_per):
         ax1.text(xx, max(ck_flow+hl_flow) + 5, str(yy) + 'G\n' + str(zz) + '%', ha='center', fontsize=7)
     for xx, yy, zz in zip(x_lab, nwl_per, total_flow):
-        ax1.text(xx, max(total_flow)-60, '×ÜÁ÷Á¿\n' + str(zz) + 'G\n\n' + 'ÄÚÍøÂÊ\n' + str(yy) + '%', ha='center',
+        ax1.text(xx, max(total_flow)-60, 'æ€»æµé‡\n' + str(zz) + 'G\n\n' + 'å†…ç½‘ç‡\n' + str(yy) + '%', ha='center',
                  fontproperties=font_num)
-    for xx, yy, zz in zip(x_lab, all_user, average_bandwidth):
-        ax1.text(xx, max(ck_flow+hl_flow)+260, '×ÜÓÃ»§Êı\n' + str(yy) + '\n'*4 +
-                 '»§¾ù´ø¿í\n' + str(zz) + '\nKbps/»§', ha='center', fontproperties=font_num)
+    for xx, yy, zz in zip(x_lab, all_user, all_bandwidth):
+        ax1.text(xx, max(ck_flow+hl_flow)+260, 'æ€»ç”¨æˆ·æ•°\n' + str(yy) + '\n'*4 +
+                 'æˆ·å‡å¸¦å®½\n' + str(zz) + '\nKbps/æˆ·', ha='center', fontproperties=font_num)
     for xx in x_lab:
         ax1.text(xx, -90, xx.split('\n')[0] + '\n' + xx.split('\n')[1][:5], ha='center', fontsize=9)
 
-    week_dic = {'0': 'ÈÕ', '1': 'Ò»', '2': '¶ş', '3': 'Èı', '4': 'ËÄ', '5': 'Îå', '6': 'Áù'}
+    week_dic = {'0': 'æ—¥', '1': 'ä¸€', '2': 'äºŒ', '3': 'ä¸‰', '4': 'å››', '5': 'äº”', '6': 'å…­'}
     for xx in x_lab:
-        the_num = datetime.datetime(year=2020,
+        the_num = datetime.datetime(year=2021,
                                 month=int(xx.split('\n')[0].replace('-', ',').replace('/', ',').split(',')[0]),
                                 day=int(xx.split('\n')[0].replace('-', ',').replace('/', ',').split(',')[1]))\
             .strftime('%w')
         ax1.text(xx, max(ck_flow+hl_flow)+120, week_dic[the_num], ha='center', fontproperties=font_week)
 
     ax2 = plt.subplot2grid((30, 10), (19, 0), colspan=1, rowspan=2)
-    ax2.legend(handles=[legend_idc, legend_hl, legend_ck], labels=["I D C", "»¥Áª»¥Í¨", "³ö    ¿Ú"], loc=2, prop=font_title)
+    ax2.legend(handles=[legend_idc, legend_hl, legend_ck], labels=["I D C", "äº’è”äº’é€š", "å‡º    å£"], loc=2, prop=font_title)
     ax2.axis('off')
 
     ax3 = ax1.twinx()
@@ -168,7 +187,7 @@ def update_excel(the_excel, the_data):
     workbook = load_workbook(filename=the_excel)
     sheet = workbook.active
     cell_max_time = sheet['A1']
-    cell_max_time.value = the_data[0][:4] + 'Äê\n' + the_data[0][5:7] + 'ÔÂ\n' + the_data[0][8:10] + 'ÈÕ'
+    cell_max_time.value = the_data[0][:4] + 'å¹´\n' + the_data[0][5:7] + 'æœˆ\n' + the_data[0][8:10] + 'æ—¥'
     cell_ck_flow = sheet['C3']
     cell_ck_flow.value = str(the_data[1]) + ' Gbps'
     cell_hl_flow = sheet['C4']
@@ -177,27 +196,47 @@ def update_excel(the_excel, the_data):
     cell_idc_flow.value = str(the_data[3]) + ' Gbps'
     cell_total_flow = sheet['C6']
     cell_total_flow.value = str(the_data[4]) + ' Gbps'
-    cell_average_bandwidth = sheet['C7']
-    cell_average_bandwidth.value = str(the_data[10]) + ' kbps'
+    cell_all_user = sheet['C7']
+    cell_all_user.value = str(the_data[9]) + ' ä¸‡'
+    cell_online_user = sheet['C8']
+    cell_online_user.value = str(the_data[11]) + ' ä¸‡'
     cell_ck_per = sheet['D3']
     cell_ck_per.value = str(the_data[5]) + ' %'
     cell_hl_per = sheet['D4']
     cell_hl_per.value = str(the_data[6]) + ' %'
     cell_idc_per = sheet['D5']
     cell_idc_per.value = str(the_data[7]) + ' %'
-    cell_nwl_per = sheet['E7']
+    cell_nwl_per = sheet['E6']
     cell_nwl_per.value = str(the_data[8]) + ' %'
-    cell_all_user = sheet['E6']
-    cell_all_user.value = str(the_data[9]) + ' Íò'
+    cell_all_bandwidth = sheet['E7']
+    cell_all_bandwidth.value = str(the_data[10]) + ' kbps'
+    cell_online_bandwidth = sheet['E8']
+    cell_online_bandwidth.value = str(the_data[12]) + ' kbps'
     workbook.save(filename=the_excel)
 
 
+def star_process():
+    cursor_aaa.execute('select count(*) from ua_broadband_user_online')
+    count_online = cursor_aaa.fetchall()
+
+    time_now = datetime.datetime.now().strftime("%H:%M")
+    the_timer = Timer(60, star_process)
+    the_timer.start()
+    dic_online.update({time_now: count_online[0]['count(*)']})
+    if time_now == '21:00':
+        sor_file, all_user = get_sor_data()
+        one_data_log = data_calculation(sor_file, all_user, dic_online)
+        log_csv(one_data_log)
+        drawing()
+        mix_pic()
+        update_pic()
+        update_excel('/jay/every_duty.xlsx', one_data_log)
+        the_timer.cancel()
+
+
 if __name__ == '__main__':
-    sor_file = get_sor_data()
-    one_data_log = data_calculation(sor_file)
-    log_csv(one_data_log)
-    drawing()
-    mix_pic()
-    update_pic()
-    every_duty_file = '/jay/ok.xlsx'
-    update_excel(every_duty_file, one_data_log)
+    con_aaa_mysql = pymysql.connect(
+        host='172.28.0.29', port=3306, user='cacti', password='8NM)V6hb', database='ua_new', charset='utf8')
+    cursor_aaa = con_aaa_mysql.cursor(pymysql.cursors.DictCursor)
+    dic_online = {}
+    star_process()
