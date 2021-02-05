@@ -1,6 +1,6 @@
-https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
+https://www.oracle.com/database/technologies/instant-client/downloads.html
 
-°²×°½âÑ¹Ëõµ½
+å®‰è£…è§£å‹ç¼©åˆ°
 mkdir /usr/local/oracle
 unzip /usr/local/oracle/instantclient-basic-linux.x64-21.1.0.0.0.zip
 unzip /usr/local/oracle/instantclient-sqlplus-linux.x64-21.1.0.0.0.zip
@@ -8,7 +8,7 @@ cd /usr/local/oracle/instantclient_21_1
 mkdir -p network/admin
 cd network/admin
 
-ĞÂ½¨tnsnames.oraÎÄ¼ş
+æ–°å»ºtnsnames.oraæ–‡ä»¶
 jlbi2 =
   (DESCRIPTION =
     (ADDRESS_LIST =
@@ -21,7 +21,7 @@ jlbi2 =
     )
   )
  
-Ìí¼Ó»·¾³±äÁ¿
+æ·»åŠ ç¯å¢ƒå˜é‡
 vim ~/.bash_profile
  
 export ORACLE_HOME=/usr/local/oracle/instantclient_21_1
@@ -31,14 +31,14 @@ export NLS_LANG=AMERICAN_AMERICA.AL32UTF8
 export LD_LIBRARY_PATH=$ORACLE_HOME
 export PATH=$ORACLE_HOME:$PATH
  
-Ö´ĞĞ»·¾³±äÁ¿
+æ‰§è¡Œç¯å¢ƒå˜é‡
 source ~/.bash_profile
  
-²âÊÔÊı¾İ¿âÁ¬½Ó
+æµ‹è¯•æ•°æ®åº“è¿æ¥
 sqlplus inter/inter#2016@jlbi2
 
-²éÑ¯
+æŸ¥è¯¢
 select * from inter.realbrd_num;
 select sum(BRD_NUM) from inter.realbrd_num where DAY_ID=20210201;
-ÈÕÆÚ ¿í´øÈ«²¿ ¿í´øÊÕ·Ñ ·Ö¹«Ë¾
+æ—¥æœŸ å®½å¸¦å…¨éƒ¨ å®½å¸¦æ”¶è´¹ åˆ†å…¬å¸
 
