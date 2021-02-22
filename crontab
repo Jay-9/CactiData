@@ -1,0 +1,1 @@
+/etc/crontab	00 19 * * * root nohup python3 -u /jay/jCacti.py > /jay/log.log 2>&1 &
