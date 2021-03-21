@@ -10,7 +10,7 @@ for file_name in os.listdir(os.getcwd()):
     if file_name == 'every_duty.xlsx':
         os.remove(os.getcwd() + '\\' + file_name)
 
-wget.download('ftp://shiyan:123@10.2.205.6/jay/every_duty.xlsx', out=os.getcwd()+'\\every_duty.xlsx')
+wget.download('ftp://shiyan:jf7d$HoA6n!9@10.2.205.6/jay/every_duty.xlsx', out=os.getcwd()+'\\every_duty.xlsx')
 os.system(r'attrib +H every_duty.xlsx')
 excel = DispatchEx("Excel.Application")
 excel.Visible = excel.DisplayAlerts = False
